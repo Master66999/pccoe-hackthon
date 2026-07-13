@@ -1,0 +1,14 @@
+{
+  "name": "relife-ai-electron",
+  "version": "1.0.0",
+  "description": "Electron desktop shell for ReLife AI",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "ReLife AI team",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^30.5.1"
+  }
+}
