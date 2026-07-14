@@ -16,6 +16,7 @@ import {
   Keyboard,
   RefreshCw
 } from 'lucide-react';
+import Dashboard from './components/Dashboard';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -220,173 +221,51 @@ function App() {
         {/* Tab Contents */}
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
-            {/* Overview Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-slate-900 border border-slate-800/80 p-6 rounded-xl relative overflow-hidden">
-                <div className="flex justify-between items-start mb-4">
-                  <span className="text-sm font-medium text-slate-400">Overall Health Score</span>
-                  <Activity className="text-emerald-400" size={20} />
+            {!scanResults ? (
+              <div className="bg-slate-900 border border-slate-800/80 p-8 rounded-xl flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
+                <div className="space-y-2 max-w-xl">
+                  <h3 className="text-lg font-bold text-slate-100">Ready to diagnose your laptop?</h3>
+                  <p className="text-sm text-slate-400">
+                    Run a complete deep-level diagnostic scan using local system profilers. Get a Digital Device Passport and personalized circular economy reuse recommendation.
+                  </p>
                 </div>
-                <div className="flex items-baseline space-x-2">
-                  <span className="text-4xl font-extrabold text-slate-100">
-                    {scanResults ? Math.round((scanResults.battery.health_pct + scanResults.storage[0].health_score + 90) / 3) : '--'}
-                  </span>
-                  {scanResults && (
-                    <span className="text-sm font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">Grade B+</span>
+                <div className="flex-shrink-0 z-10">
+                  {scanStatus === 'idle' && (
+                    <button 
+                      onClick={triggerScan}
+                      className="flex items-center space-x-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold px-6 py-3 rounded-lg transition-all duration-200 shadow-lg shadow-emerald-500/20 active:scale-95"
+                    >
+                      <Play size={18} fill="currentColor" />
+                      <span>Run Health Scan</span>
+                    </button>
+                  )}
+                  {scanStatus === 'scanning' && (
+                    <div className="flex flex-col items-end space-y-2">
+                      <span className="text-sm text-slate-400 font-semibold animate-pulse">Scanning: {currentStepName} ({scanProgress}%)</span>
+                      <div className="w-64 h-2 bg-slate-800 rounded-full overflow-hidden">
+                        <div className="h-full bg-emerald-500 transition-all duration-300" style={{ width: `${scanProgress}%` }}></div>
+                      </div>
+                    </div>
+                  )}
+                  {scanStatus === 'error' && (
+                    <div className="flex items-center space-x-3">
+                      <span className="text-xs bg-red-500/10 text-red-400 px-3 py-1.5 rounded-full border border-red-500/20 font-semibold flex items-center space-x-1.5">
+                        <AlertTriangle size={12} />
+                        <span>Scan Failed</span>
+                      </span>
+                      <button 
+                        onClick={triggerScan}
+                        className="text-xs bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold px-3 py-2 rounded"
+                      >
+                        Retry
+                      </button>
+                    </div>
                   )}
                 </div>
-                <div className="mt-4 text-xs text-slate-400 flex items-center space-x-1.5">
-                  <CheckCircle size={14} className="text-emerald-400" />
-                  <span>{scanResults ? 'Battery is primary concern' : 'Run diagnostic scan first'}</span>
-                </div>
-                <div className="absolute right-0 bottom-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl"></div>
+                <div className="absolute left-0 top-0 w-1/2 h-full bg-gradient-to-r from-emerald-500/5 to-transparent pointer-events-none"></div>
               </div>
-
-              <div className="bg-slate-900 border border-slate-800/80 p-6 rounded-xl relative overflow-hidden">
-                <div className="flex justify-between items-start mb-4">
-                  <span className="text-sm font-medium text-slate-400">Total Carbon Saved</span>
-                  <Leaf className="text-emerald-400" size={20} />
-                </div>
-                <div className="flex items-baseline space-x-2">
-                  <span className="text-4xl font-extrabold text-slate-100">{scanResults ? '335' : '--'}</span>
-                  {scanResults && <span className="text-sm text-slate-300">kg CO2</span>}
-                </div>
-                <div className="mt-4 text-xs text-slate-400 flex items-center space-x-1.5">
-                  <Clock size={14} className="text-emerald-400" />
-                  <span>{scanResults ? 'Equivalent to 15.2 trees planted' : 'Offsets pending diagnosis'}</span>
-                </div>
-                <div className="absolute right-0 bottom-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl"></div>
-              </div>
-
-              <div className="bg-slate-900 border border-slate-800/80 p-6 rounded-xl relative overflow-hidden">
-                <div className="flex justify-between items-start mb-4">
-                  <span className="text-sm font-medium text-slate-400">Recommended Path</span>
-                  <SettingsIcon className="text-amber-400" size={20} />
-                </div>
-                <div className="flex items-baseline space-x-2">
-                  <span className="text-xl font-bold text-amber-400">{scanResults ? 'REPAIR RECOMMENDED' : '--'}</span>
-                </div>
-                <div className="mt-4 text-xs text-slate-400 flex items-center space-x-1.5">
-                  <AlertTriangle size={14} className="text-amber-400" />
-                  <span>{scanResults ? `Battery capacity: ${scanResults.battery.health_pct}%` : 'Diagnosis pending'}</span>
-                </div>
-                <div className="absolute right-0 bottom-0 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl"></div>
-              </div>
-            </div>
-
-            {/* Quick Actions / Scan CTA */}
-            <div className="bg-slate-900 border border-slate-800/80 p-8 rounded-xl flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
-              <div className="space-y-2 max-w-xl">
-                <h3 className="text-lg font-bold text-slate-100">Ready to diagnose your laptop?</h3>
-                <p className="text-sm text-slate-400">
-                  Run a complete deep-level diagnostic scan using local system profilers. Get a Digital Device Passport and personalized circular economy reuse recommendation.
-                </p>
-              </div>
-              <div className="flex-shrink-0 z-10">
-                {scanStatus === 'idle' && (
-                  <button 
-                    onClick={triggerScan}
-                    className="flex items-center space-x-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold px-6 py-3 rounded-lg transition-all duration-200 shadow-lg shadow-emerald-500/20 active:scale-95"
-                  >
-                    <Play size={18} fill="currentColor" />
-                    <span>Run Health Scan</span>
-                  </button>
-                )}
-                {scanStatus === 'scanning' && (
-                  <div className="flex flex-col items-end space-y-2">
-                    <span className="text-sm text-slate-400 font-semibold animate-pulse">Scanning: {currentStepName} ({scanProgress}%)</span>
-                    <div className="w-64 h-2 bg-slate-800 rounded-full overflow-hidden">
-                      <div className="h-full bg-emerald-500 transition-all duration-300" style={{ width: `${scanProgress}%` }}></div>
-                    </div>
-                  </div>
-                )}
-                {scanStatus === 'completed' && (
-                  <div className="flex items-center space-x-3">
-                    <span className="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-full border border-emerald-500/20 font-semibold flex items-center space-x-1.5">
-                      <CheckCircle size={12} />
-                      <span>Scan Successful</span>
-                    </span>
-                    <button 
-                      onClick={triggerScan}
-                      className="flex items-center space-x-1.5 text-xs bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded text-slate-200 transition-all"
-                    >
-                      <RefreshCw size={12} />
-                      <span>Rescan</span>
-                    </button>
-                  </div>
-                )}
-                {scanStatus === 'error' && (
-                  <div className="flex items-center space-x-3">
-                    <span className="text-xs bg-red-500/10 text-red-400 px-3 py-1.5 rounded-full border border-red-500/20 font-semibold flex items-center space-x-1.5">
-                      <AlertTriangle size={12} />
-                      <span>Scan Failed</span>
-                    </span>
-                    <button 
-                      onClick={triggerScan}
-                      className="text-xs bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold px-3 py-2 rounded"
-                    >
-                      Retry
-                    </button>
-                  </div>
-                )}
-              </div>
-              <div className="absolute left-0 top-0 w-1/2 h-full bg-gradient-to-r from-emerald-500/5 to-transparent pointer-events-none"></div>
-            </div>
-
-            {/* Results Grid */}
-            {scanResults && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Device Info */}
-                <div className="bg-slate-900 border border-slate-800/80 p-6 rounded-xl space-y-4">
-                  <h3 className="text-base font-bold text-slate-200 border-b border-slate-800 pb-2">Device Specification</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between"><span className="text-slate-400">Manufacturer</span><span className="font-semibold">{scanResults.device_info.manufacturer}</span></div>
-                    <div className="flex justify-between"><span className="text-slate-400">Model</span><span className="font-semibold">{scanResults.device_info.model}</span></div>
-                    <div className="flex justify-between"><span className="text-slate-400">Serial Number</span><span className="font-mono text-xs">{scanResults.device_info.serial_number}</span></div>
-                    <div className="flex justify-between"><span className="text-slate-400">OS Version</span><span className="font-semibold">{scanResults.device_info.os_version}</span></div>
-                    <div className="flex justify-between"><span className="text-slate-400">Processor</span><span className="font-semibold text-xs text-right max-w-[200px] truncate">{scanResults.device_info.processor}</span></div>
-                  </div>
-                </div>
-
-                {/* Battery Details */}
-                <div className="bg-slate-900 border border-slate-800/80 p-6 rounded-xl space-y-4">
-                  <h3 className="text-base font-bold text-slate-200 border-b border-slate-800 pb-2 flex items-center justify-between">
-                    <span>Battery Health</span>
-                    <span className="text-xs bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20">Degraded</span>
-                  </h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between"><span className="text-slate-400">Design Capacity</span><span>{scanResults.battery.design_capacity} mWh</span></div>
-                    <div className="flex justify-between"><span className="text-slate-400">Full Charge Capacity</span><span>{scanResults.battery.full_charge_capacity} mWh</span></div>
-                    <div className="flex justify-between"><span className="text-slate-400">State of Health (SOH)</span><span className="font-semibold text-amber-400">{scanResults.battery.health_pct}%</span></div>
-                    <div className="flex justify-between"><span className="text-slate-400">Cycle Count</span><span>{scanResults.battery.cycle_count} cycles</span></div>
-                  </div>
-                </div>
-
-                {/* Storage & Memory */}
-                <div className="bg-slate-900 border border-slate-800/80 p-6 rounded-xl space-y-4">
-                  <h3 className="text-base font-bold text-slate-200 border-b border-slate-800 pb-2 flex items-center justify-between">
-                    <span>Storage Health</span>
-                    <span className="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20">Excellent</span>
-                  </h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between"><span className="text-slate-400">Disk Name</span><span className="font-semibold text-xs">{scanResults.storage[0].device_name}</span></div>
-                    <div className="flex justify-between"><span className="text-slate-400">SMART Status Score</span><span className="font-semibold text-emerald-400">{scanResults.storage[0].health_score}%</span></div>
-                    <div className="flex justify-between"><span className="text-slate-400">Power On Hours</span><span>{scanResults.storage[0].power_on_hours} hrs</span></div>
-                    <div className="flex justify-between"><span className="text-slate-400">Temperature</span><span>{scanResults.storage[0].temperature} °C</span></div>
-                  </div>
-                </div>
-
-                {/* CPU & RAM Usage */}
-                <div className="bg-slate-900 border border-slate-800/80 p-6 rounded-xl space-y-4">
-                  <h3 className="text-base font-bold text-slate-200 border-b border-slate-800 pb-2">Active Utilization</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between"><span className="text-slate-400">CPU Usage</span><span>{Math.round(scanResults.cpu.utilization)}%</span></div>
-                    <div className="flex justify-between"><span className="text-slate-400">RAM Total</span><span>{scanResults.ram.total_gb} GB</span></div>
-                    <div className="flex justify-between"><span className="text-slate-400">RAM Usage</span><span>{Math.round(scanResults.ram.utilization)}% ({scanResults.ram.used_gb} GB used)</span></div>
-                    <div className="flex justify-between"><span className="text-slate-400">Memory Faults</span><span className="text-emerald-400">{scanResults.ram.error_count} detected</span></div>
-                  </div>
-                </div>
-              </div>
+            ) : (
+              <Dashboard scanData={scanResults} deviceData={scanResults.device_info} />
             )}
           </div>
         )}

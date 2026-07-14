@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     
     # Database
-    DATABASE_URL: str = "sqlite:///./relife_ai.db"
+    MONGO_URI: str = "mongodb://localhost:27017/relife_ai"
     
     # Security
     JWT_SECRET_KEY: str = "super_secret_signing_key_change_me_in_production"

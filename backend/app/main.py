@@ -6,11 +6,25 @@ import structlog
 # Set up logging
 logger = structlog.get_logger()
 
+from contextlib import asynccontextmanager
+from app.database import init_db
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await init_db()
+    yield
+
 app = FastAPI(
     title="ReLife AI API",
     description="Backend API for Laptop Health Assessment & Circular Economy Platform",
     version="1.0.0",
+    lifespan=lifespan,
 )
+
+from app.api import auth, scans
+
+app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["Authentication"])
+app.include_router(scans.router, prefix=f"{settings.API_V1_STR}/scans", tags=["Scans"])
 
 # CORS middleware config
 app.add_middleware(
