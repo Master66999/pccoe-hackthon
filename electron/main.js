@@ -3,6 +3,19 @@ const path = require('path');
 const { spawn } = require('child_process');
 
 let mainWindow;
+let activeMonitorProcess = null;
+
+function killActiveMonitor() {
+  if (activeMonitorProcess) {
+    console.log('Main process: Killing active hardware monitor process...');
+    try {
+      activeMonitorProcess.kill();
+    } catch (e) {
+      console.error('Error killing monitor process:', e);
+    }
+    activeMonitorProcess = null;
+  }
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -42,9 +55,14 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => {
+  killActiveMonitor();
   if (process.platform !== 'darwin') {
     app.quit();
   }
+});
+
+app.on('will-quit', () => {
+  killActiveMonitor();
 });
 
 // IPC communication handlers to launch diagnostic scanner
@@ -60,8 +78,22 @@ ipcMain.handle('start-hardware-scan', async (event, args) => {
     
     const scriptPath = path.join(__dirname, '../scanner/main.py');
     
-    console.log(`Spawning scanner using: ${pythonPath} ${scriptPath}`);
-    const pyProcess = spawn(pythonPath, [scriptPath]);
+    // Parse permissions from arguments
+    let allowedList = [];
+    if (args && args.permissions) {
+      for (const [key, value] of Object.entries(args.permissions)) {
+        if (value === true) {
+          allowedList.push(key);
+        }
+      }
+    } else {
+      allowedList = ['system_info', 'battery', 'storage', 'cpu', 'ram', 'peripherals'];
+    }
+    const allowArg = allowedList.join(',');
+    const pyArgs = [scriptPath, '--allow', allowArg];
+    
+    console.log(`Spawning scanner using: ${pythonPath} ${pyArgs.join(' ')}`);
+    const pyProcess = spawn(pythonPath, pyArgs);
     
     let buffer = '';
     
@@ -103,4 +135,73 @@ ipcMain.handle('start-hardware-scan', async (event, args) => {
       }
     });
   });
+});
+
+ipcMain.handle('start-hardware-monitor', async (event, args) => {
+  console.log('Main process: Starting local hardware telemetry monitor...', args);
+  killActiveMonitor();
+
+  return new Promise((resolve) => {
+    let pythonPath = path.join(__dirname, '../venv/Scripts/python.exe');
+    if (process.platform !== 'win32') {
+      pythonPath = path.join(__dirname, '../venv/bin/python');
+    }
+    const scriptPath = path.join(__dirname, '../scanner/main.py');
+
+    let allowedList = [];
+    if (args && args.permissions) {
+      for (const [key, value] of Object.entries(args.permissions)) {
+        if (value === true) {
+          allowedList.push(key);
+        }
+      }
+    } else {
+      allowedList = ['system_info', 'battery', 'storage', 'cpu', 'ram'];
+    }
+    const allowArg = allowedList.join(',');
+    const interval = args && args.interval ? args.interval : 1.5;
+
+    const pyArgs = [scriptPath, '--monitor', '--allow', allowArg, '--interval', String(interval)];
+    console.log(`Spawning monitor using: ${pythonPath} ${pyArgs.join(' ')}`);
+
+    const pyProcess = spawn(pythonPath, pyArgs);
+    activeMonitorProcess = pyProcess;
+
+    let buffer = '';
+    pyProcess.stdout.on('data', (data) => {
+      buffer += data.toString();
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        try {
+          const payload = JSON.parse(line);
+          if (payload.type === 'monitor' && mainWindow) {
+            mainWindow.webContents.send('monitor-data-event', payload.data);
+          }
+        } catch (err) {
+          console.error('Failed to parse monitor stdout line:', line, err);
+        }
+      }
+    });
+
+    pyProcess.stderr.on('data', (data) => {
+      console.error('Monitor stderr:', data.toString());
+    });
+
+    pyProcess.on('close', (code) => {
+      console.log(`Monitor subprocess exited with code ${code}`);
+      if (activeMonitorProcess === pyProcess) {
+        activeMonitorProcess = null;
+      }
+    });
+
+    resolve(true);
+  });
+});
+
+ipcMain.handle('stop-hardware-monitor', async () => {
+  killActiveMonitor();
+  return true;
 });

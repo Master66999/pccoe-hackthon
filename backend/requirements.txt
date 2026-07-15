@@ -11,3 +11,4 @@ structlog
 psutil
 wmi; sys_platform == 'win32'
 pySMART
+email-validator

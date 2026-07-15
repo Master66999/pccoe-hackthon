@@ -1,4 +1,8 @@
 from motor.motor_asyncio import AsyncIOMotorClient
+# Monkeypatch AsyncIOMotorClient for Beanie compatibility
+if not hasattr(AsyncIOMotorClient, 'append_metadata'):
+    AsyncIOMotorClient.append_metadata = lambda *args, **kwargs: None
+
 from beanie import init_beanie
 from app.config import settings
 

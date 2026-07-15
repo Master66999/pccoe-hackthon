@@ -7,7 +7,7 @@
     "install:deps": "npm install --prefix frontend --legacy-peer-deps && npm install --prefix electron --legacy-peer-deps",
     "dev:frontend": "npm --prefix frontend run dev",
     "dev:electron": "cross-env NODE_ENV=development npm --prefix electron start",
-    "dev": "concurrently \"npm run dev:frontend\" \"wait-on http://localhost:5173 && npm run dev:electron\"",
+    "dev": "concurrently \"npm run backend:start\" \"npm run dev:frontend\" \"wait-on http://localhost:5173 && npm run dev:electron\"",
     "backend:start": "python -m venv venv && .\\venv\\Scripts\\activate && pip install -r backend/requirements.txt && python backend/app/main.py"
   },
   "devDependencies": {

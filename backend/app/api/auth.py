@@ -65,6 +65,23 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         raise credentials_exception
     return user
 
+oauth2_scheme_optional = OAuth2PasswordBearer(
+    tokenUrl=f"{settings.API_V1_STR}/auth/login",
+    auto_error=False
+)
+
+async def get_optional_current_user(token: str | None = Depends(oauth2_scheme_optional)):
+    if not token:
+        return None
+    try:
+        payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            return None
+    except Exception:
+        return None
+    return await User.find_one(User.email == email)
+
 @router.post("/register", response_model=UserResponse)
 async def register_user(user_in: UserCreate):
     user = await User.find_one(User.email == user_in.email)

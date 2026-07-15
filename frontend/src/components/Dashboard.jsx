@@ -100,6 +100,26 @@ export default function Dashboard({ scanData, deviceData }) {
         </button>
       </div>
 
+      {/* Device Info Panel */}
+      <div className="bg-slate-900 border border-slate-800 p-6 rounded-xl grid grid-cols-2 md:grid-cols-4 gap-4 shadow-lg shadow-slate-950/20">
+        <div>
+          <span className="block text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Device Model</span>
+          <span className="text-sm font-bold text-slate-100">{deviceData?.manufacturer || 'Unknown'} {deviceData?.model || 'Unknown'}</span>
+        </div>
+        <div>
+          <span className="block text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Operating System</span>
+          <span className="text-sm font-bold text-emerald-450 text-emerald-400">{deviceData?.os_version || 'Unknown'}</span>
+        </div>
+        <div>
+          <span className="block text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Processor Specs</span>
+          <span className="text-sm font-bold text-slate-200 truncate block" title={deviceData?.processor}>{deviceData?.processor || 'Unknown'}</span>
+        </div>
+        <div>
+          <span className="block text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Serial Number</span>
+          <span className="text-sm font-mono font-bold text-slate-300">{deviceData?.serial_number || 'Unknown'}</span>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Main Score Card */}
         <div className="bg-gray-800/80 backdrop-blur border border-gray-700 rounded-xl p-6 flex flex-col items-center justify-center relative overflow-hidden group hover:border-green-500/50 transition-colors">
@@ -215,11 +235,19 @@ export default function Dashboard({ scanData, deviceData }) {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-gray-400">Level</span>
-              <span className="text-white font-medium">{scanData.battery?.percent || "N/A"}%</span>
+              <span className="text-white font-medium">
+                {scanData.battery?.status === "Permission Denied" 
+                  ? "Denied" 
+                  : (scanData.battery?.percent !== undefined ? `${scanData.battery.percent}%` : "N/A")}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Status</span>
-              <span className="text-white font-medium">{scanData.battery?.power_plugged ? "Charging" : "Discharging"}</span>
+              <span className="text-white font-medium">
+                {scanData.battery?.status === "Permission Denied" 
+                  ? "Denied" 
+                  : (scanData.battery?.power_plugged ? "Charging" : "Discharging")}
+              </span>
             </div>
           </div>
         </div>
@@ -235,11 +263,19 @@ export default function Dashboard({ scanData, deviceData }) {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-gray-400">Usage</span>
-              <span className="text-white font-medium">{scanData.cpu?.percent || "N/A"}%</span>
+              <span className="text-white font-medium">
+                {scanData.cpu?.status === "Permission Denied" 
+                  ? "Denied" 
+                  : (scanData.cpu?.percent !== undefined ? `${scanData.cpu.percent}%` : "N/A")}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Cores</span>
-              <span className="text-white font-medium">{scanData.cpu?.cores_logical || "N/A"} Logical</span>
+              <span className="text-white font-medium">
+                {scanData.cpu?.status === "Permission Denied" 
+                  ? "Denied" 
+                  : (scanData.cpu?.cores_logical !== undefined ? `${scanData.cpu.cores_logical} Logical` : "N/A")}
+              </span>
             </div>
           </div>
         </div>
@@ -255,11 +291,19 @@ export default function Dashboard({ scanData, deviceData }) {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-gray-400">Total</span>
-              <span className="text-white font-medium">{Math.round((scanData.memory?.total || 0) / (1024**3))} GB</span>
+              <span className="text-white font-medium">
+                {scanData.memory?.status === "Permission Denied" 
+                  ? "Denied" 
+                  : (scanData.memory?.total !== undefined ? `${Math.round(scanData.memory.total / (1024**3))} GB` : "N/A")}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Used</span>
-              <span className="text-white font-medium">{scanData.memory?.percent || "N/A"}%</span>
+              <span className="text-white font-medium">
+                {scanData.memory?.status === "Permission Denied" 
+                  ? "Denied" 
+                  : (scanData.memory?.percent !== undefined ? `${scanData.memory.percent}%` : "N/A")}
+              </span>
             </div>
           </div>
         </div>
@@ -272,7 +316,9 @@ export default function Dashboard({ scanData, deviceData }) {
             </div>
             <h4 className="font-medium text-gray-200">Storage</h4>
           </div>
-          {scanData.disk?.length > 0 ? (
+          {scanData.disk?.status === "Permission Denied" ? (
+            <div className="text-sm text-red-400">Denied</div>
+          ) : scanData.disk?.length > 0 ? (
              <div className="space-y-2 text-sm">
              <div className="flex justify-between">
                <span className="text-gray-400">Total</span>

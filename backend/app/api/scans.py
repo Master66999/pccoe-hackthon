@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import Dict, Any, List, Optional
 from app.models.scan import ScanResult
 from app.models.user import User
-from app.api.auth import get_current_user
+from app.api.auth import get_current_user, get_optional_current_user
 from app.services.scoring import (
     calculate_health_score,
     calculate_repairability_score,
@@ -33,7 +33,7 @@ class ScanResponse(BaseModel):
 @router.post("/submit", response_model=ScanResponse)
 async def submit_scan(
     scan_in: ScanSubmission, 
-    current_user: Optional[User] = Depends(get_current_user)
+    current_user: Optional[User] = Depends(get_optional_current_user)
 ):
     """
     Submit a completed diagnostic scan for processing.

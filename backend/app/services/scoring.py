@@ -9,7 +9,7 @@ def calculate_health_score(scan_data: Dict[str, Any]) -> float:
     
     # 1. Battery Health
     battery = scan_data.get("battery", {})
-    if battery:
+    if isinstance(battery, dict) and "error" not in battery and battery.get("status") != "Permission Denied":
         percent = battery.get("percent", 100)
         power_plugged = battery.get("power_plugged", True)
         if percent < 50 and not power_plugged:
@@ -19,23 +19,25 @@ def calculate_health_score(scan_data: Dict[str, Any]) -> float:
             
     # 2. Disk Health
     disks = scan_data.get("disk", [])
-    for disk in disks:
-        percent_used = disk.get("percent", 0)
-        if percent_used > 90:
-            score -= 15
-        elif percent_used > 75:
-            score -= 5
+    if isinstance(disks, list):
+        for disk in disks:
+            if isinstance(disk, dict):
+                percent_used = disk.get("percent", 0)
+                if percent_used > 90:
+                    score -= 15
+                elif percent_used > 75:
+                    score -= 5
             
     # 3. Memory Health
     memory = scan_data.get("memory", {})
-    if memory:
+    if isinstance(memory, dict) and "error" not in memory and memory.get("status") != "Permission Denied":
         mem_percent = memory.get("percent", 0)
         if mem_percent > 85:
             score -= 10
             
     # 4. CPU Temp / Usage
     cpu = scan_data.get("cpu", {})
-    if cpu:
+    if isinstance(cpu, dict) and "error" not in cpu and cpu.get("status") != "Permission Denied":
         cpu_usage = cpu.get("percent", 0)
         if cpu_usage > 90:
             score -= 10

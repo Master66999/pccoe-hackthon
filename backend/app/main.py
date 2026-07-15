@@ -1,3 +1,7 @@
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import time
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,6 +12,7 @@ logger = structlog.get_logger()
 
 from contextlib import asynccontextmanager
 from app.database import init_db
+from app.config import settings
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
